@@ -14,28 +14,24 @@ import traceback
 import csv
 import os
 
-fileName = ""
+fileName = ''
 saveLoc = ''
 sheetNo = 0
-#sImg = []
+
 def readEx(sh):
     wb = load_workbook(sh)
     wbs = wb.worksheets[sheetNo]
-    #wbx = wbs['A2':'D{0}'.format(countRow(wbs))]
-    #extractImg(wbs)
     createPrintPDF(wbs)
     return(wbs)
 
 def extractImg(wb):
     imgLoad = SheetImageLoader(wb)
-    #global sImg
     sImg = []
     for i in range(1,countRow(wb)):
         if imgLoad.image_in('A{0}'.format(i)):
             sImg.append(imgLoad.get('A{0}'.format(i)))
         else:
             sImg.append(None)
-    #print(sImg)
     return sImg
 
 def countRow(ws):
@@ -47,10 +43,9 @@ def countRow(ws):
     
 
 def createPrintPDF(wbk):
-    pageCount = 0
     imgx = 1
     imgy = 24.95
-    titx = 4.8 #against image L
+    titx = 4.8
     tity = 24.95+1.3
     subx = 4.8
     suby = 24.95
@@ -58,8 +53,6 @@ def createPrintPDF(wbk):
     qrcy = 24.95
     
     imgs = extractImg(wbk)
-    #print(imgs)
-    #for total rows: if modulo 6=0 new page
     c = canvas.Canvas('{0}{1}labels.pdf'.format(saveLoc,'/'),pagesize=A4)
     for crow in range(2,countRow(wbk)+2):
         if ((crow-2)%6==0 or crow==countRow(wbk)+1):
@@ -67,29 +60,20 @@ def createPrintPDF(wbk):
                 c.showPage()
                 if (crow==countRow(wbk)+1):
                     c.save()
-                    
-                    
                 imgx = 1
                 imgy = 24.95
-                titx = 4.8 #against image L
+                titx = 4.8
                 tity = 24.95+1.3
                 subx = 4.8
                 suby = 24.95
                 qrcx = 16.2
                 qrcy = 24.95
                 if (crow >= countRow(wbk)+1):
-                    break;         
-            pageCount+=1
+                    break;
         #img
         #fImg = Frame(imgx*cm,imgy*cm,3.8*cm,3.8*cm,showBoundary=1)
-        try:
-            #print(scaleImage(imgs[crow-2]))
-            c.drawImage(utils.ImageReader(imgs[crow-2]),x=imgx*cm, y=imgy*cm,width=3.8*cm,height=3.8*cm)
-            pass
-        except:
-            pass
+        c.drawImage(utils.ImageReader(imgs[crow-2]),x=imgx*cm, y=imgy*cm,width=3.8*cm,height=3.8*cm)
         #fImg.addFromList(dimg, c)
-        #fImg.drawBoundary(c)
         imgy-=4.8
         
         #title
@@ -101,7 +85,6 @@ def createPrintPDF(wbk):
             dtittemp = [Paragraph(str(wbk.cell(row=crow,column=2).value),titStyle)]
         dtit = KeepInFrame(11.4*cm, 2*cm, dtittemp, mode='shrink', vAlign='MIDDLE', hAlign='CENTER', fakeWidth=False)
         fTit.addFromList([dtit], c)
-        #fTit.drawBoundary(c)
         tity-=4.8
         
         
@@ -114,12 +97,10 @@ def createPrintPDF(wbk):
             dsubtemp = [Paragraph(str(wbk.cell(row=crow,column=3).value),subStyle)]
         dsub = KeepInFrame(11.4*cm, 1.3*cm, dsubtemp, mode='shrink', vAlign='MIDDLE', hAlign='CENTER', fakeWidth=False)
         fSub.addFromList([dsub], c)
-        #fSub.drawBoundary(c)
         suby-=4.8
         
         #qrcode
         fQrc = Frame(qrcx*cm,qrcy*cm,3.8*cm,3.8*cm,showBoundary=1)
-        #fQrc.drawBoundary(c)
         qrcy-=4.8
 
 def loadGUI():
@@ -146,12 +127,7 @@ def loadGUI():
         if (fteT.get() == '' or steT.get()==''):
             el["text"]="After a not-so-comprehensive internal investigation we've determined this incident to be user error"
         else:
-            try:
-                mS = readEx(fileName)
-                #for c1,c2,c3,c4 in mS:
-                #    print("{0} {1} {2} {3}".format(c1.value, c2.value, c3.value, c4.value))
-            except Exception as error:
-                el["text"]= error,str(traceback.extract_stack()[-1][1])
+            mS = readEx(fileName)
     
     ft = tk.Label(text="xlsx File:")
     ft.place(width=50,height=25,x=10,y=10)
