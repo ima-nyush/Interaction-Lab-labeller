@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from openpyxl import load_workbook
 from openpyxl_image_loader import SheetImageLoader
-from PIL import Image
 import tkinter as tk
 from tkinter import filedialog
 from reportlab.pdfgen import canvas
@@ -10,19 +9,13 @@ from reportlab.lib.pagesizes import A4
 from reportlab.platypus import Frame, Paragraph, KeepInFrame
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib import utils
-import traceback
-import csv
-import os
 
 fileName = ''
 saveLoc = ''
-sheetNo = 0
 
-def readEx(sh):
-    wb = load_workbook(sh)
-    wbs = wb.worksheets[sheetNo]
-    createPrintPDF(wbs)
-    return(wbs)
+def readExcel(wb):
+    wb = load_workbook(wb).active
+    createPrintPDF(wb)
 
 def extractImg(wb):
     imgLoad = SheetImageLoader(wb)
@@ -40,74 +33,72 @@ def countRow(ws):
         if any(cell.value is not None for cell in row):
             rc+=1
     return rc
-    
 
-def createPrintPDF(wbk):
-    imgx = 1
-    imgy = 24.95
-    titx = 4.8
-    tity = 24.95+1.3
-    subx = 4.8
-    suby = 24.95
-    qrcx = 16.2
-    qrcy = 24.95
+def createPrintPDF(wb):
+    imageX = 1
+    imageY = 24.95
+    titleX = 4.8
+    titleY = 24.95+1.3
+    subtitleX = 4.8
+    subtitleY = 24.95
+    #qrCodeX = 16.2
+    #qrCodeY = 24.95
     
-    imgs = extractImg(wbk)
+    imgs = extractImg(wb)
     c = canvas.Canvas('{0}{1}labels.pdf'.format(saveLoc,'/'),pagesize=A4)
-    for crow in range(2,countRow(wbk)+2):
-        if ((crow-2)%6==0 or crow==countRow(wbk)+1):
-            if (crow!=2):
+    
+    for row in range(2,countRow(wb)+2):
+        if ((row-2)%6==0 or row==countRow(wb)+1):
+            if (row!=2):
                 c.showPage()
-                if (crow==countRow(wbk)+1):
+                if (row==countRow(wb)+1):
                     c.save()
-                imgx = 1
-                imgy = 24.95
-                titx = 4.8
-                tity = 24.95+1.3
-                subx = 4.8
-                suby = 24.95
-                qrcx = 16.2
-                qrcy = 24.95
-                if (crow >= countRow(wbk)+1):
-                    break;
+                    break
+                imageX = 1
+                imageY = 24.95
+                titleX = 4.8
+                titleY = 24.95+1.3
+                subtitleX = 4.8
+                subtitleY = 24.95
+                #qrCodeX = 16.2
+                #qrCodeY = 24.95
         #img
-        #fImg = Frame(imgx*cm,imgy*cm,3.8*cm,3.8*cm,showBoundary=1)
-        c.drawImage(utils.ImageReader(imgs[crow-2]),x=imgx*cm, y=imgy*cm,width=3.8*cm,height=3.8*cm)
-        #fImg.addFromList(dimg, c)
-        imgy-=4.8
+        if imgs[row-2]!=None:
+            c.drawImage(utils.ImageReader(imgs[row-2]),x=imageX*cm, y=imageY*cm,width=3.8*cm,height=3.8*cm)
+        imageY-=4.8
         
         #title
-        fTit = Frame(titx*cm, tity*cm,11.4*cm, 2.5*cm, showBoundary=0)
-        titStyle = ParagraphStyle('title', fontName='Helvetica', fontSize=70, alignment=1, wordWrap=None, leading=75)
-        if wbk.cell(row=crow,column=2).value == None:
-            dtittemp = ''
+        titleFrame = Frame(titleX*cm, titleY*cm,11.4*cm, 2.5*cm, showBoundary=0)
+        titleStyle = ParagraphStyle('title', fontName='Helvetica', fontSize=70, alignment=1, wordWrap=None, leading=75)
+        if wb.cell(row=row,column=2).value == None:
+            titleTxt = ''
         else:
-            dtittemp = [Paragraph(str(wbk.cell(row=crow,column=2).value),titStyle)]
-        dtit = KeepInFrame(11.4*cm, 2*cm, dtittemp, mode='shrink', vAlign='MIDDLE', hAlign='CENTER', fakeWidth=False)
-        fTit.addFromList([dtit], c)
-        tity-=4.8
+            titleTxt = [Paragraph(str(wb.cell(row=row,column=2).value),titleStyle)]
+        titleTxtC = KeepInFrame(11.4*cm, 2*cm, titleTxt, mode='shrink', vAlign='MIDDLE', hAlign='CENTER', fakeWidth=False)
+        titleFrame.addFromList([titleTxtC], c)
+        titleY-=4.8
         
         
         #subtitle
-        fSub = Frame(subx*cm,suby*cm,11.4*cm,1.3*cm,showBoundary=0)
-        subStyle = ParagraphStyle('subtitle', fontName='Helvetica', fontSize=36, alignment=1, wordWrap=None, leading=40)
-        if wbk.cell(row=crow,column=3).value == None:
-            dsubtemp = ''
+        subtitleFrame = Frame(subtitleX*cm,subtitleY*cm,11.4*cm,1.3*cm,showBoundary=0)
+        subtitleStyle = ParagraphStyle('subtitle', fontName='Helvetica', fontSize=36, alignment=1, wordWrap=None, leading=40)
+        if wb.cell(row=row,column=3).value == None:
+            subtitleTxt = ''
         else:
-            dsubtemp = [Paragraph(str(wbk.cell(row=crow,column=3).value),subStyle)]
-        dsub = KeepInFrame(11.4*cm, 1.3*cm, dsubtemp, mode='shrink', vAlign='MIDDLE', hAlign='CENTER', fakeWidth=False)
-        fSub.addFromList([dsub], c)
-        suby-=4.8
+            subtitleTxt = [Paragraph(str(wb.cell(row=row,column=3).value),subtitleStyle)]
+        subtitleTxtC = KeepInFrame(11.4*cm, 1.3*cm, subtitleTxt, mode='shrink', vAlign='MIDDLE', hAlign='CENTER', fakeWidth=False)
+        subtitleFrame.addFromList([subtitleTxtC], c)
+        subtitleY-=4.8
         
         #qrcode
-        fQrc = Frame(qrcx*cm,qrcy*cm,3.8*cm,3.8*cm,showBoundary=1)
-        qrcy-=4.8
+        #qrCodeFrame = Frame(qrCodeX*cm,qrCodeY*cm,3.8*cm,3.8*cm,showBoundary=1)
+        #qrCodeY-=4.8
 
 def loadGUI():
     window = tk.Tk()
     window.geometry("600x115")
     window.resizable(False,False)
-    window.title("Kevin's Super Duper Ultimate Label Printer Series 5000")
+    window.title("IXL Label PDF Generator")
     
     def fileUp(event = None):
         fn = filedialog.askopenfilename(filetypes=[("Excel files","*.xlsx")])
@@ -125,9 +116,9 @@ def loadGUI():
     
     def preRunCheck(event = None):
         if (fteT.get() == '' or steT.get()==''):
-            el["text"]="After a not-so-comprehensive internal investigation we've determined this incident to be user error"
+            el["text"]="Missing sheet and/or save location"
         else:
-            mS = readEx(fileName)
+            readExcel(fileName)
     
     ft = tk.Label(text="xlsx File:")
     ft.place(width=50,height=25,x=10,y=10)
