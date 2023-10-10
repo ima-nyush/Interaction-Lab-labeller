@@ -23,7 +23,7 @@ def loadGUI():
     def extractImg(wb):
         imgLoad = SheetImageLoader(wb)
         imgList = []
-        for i in range(1,countRow(wb)):
+        for i in range(2,countRow(wb)+1):
             if imgLoad.image_in('A{0}'.format(i)):
                 imgList.append(imgLoad.get('A{0}'.format(i)))
             else:
