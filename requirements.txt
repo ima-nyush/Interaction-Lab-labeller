@@ -1,0 +1,4 @@
+openpyxl
+openpyxl_image_loader
+# on Mac: brew install python-tk
+reportlab
