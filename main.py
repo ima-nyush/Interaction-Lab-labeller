@@ -10,6 +10,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.platypus import Frame, Paragraph, KeepInFrame
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib import utils
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 import traceback
 import csv
 import os
@@ -50,13 +52,16 @@ def createPrintPDF(wbk):
     pageCount = 0
     imgx = 1
     imgy = 24.95
-    titx = 4.8 #against image L
-    tity = 24.95+1.3
-    subx = 4.8
-    suby = 24.95
+    titx = 1.83 #against image L?
+    tity = 24.95+1.3-1.74
+    subx = 1.83
+    suby = 24.95+1.3-1.74
     qrcx = 16.2
     qrcy = 24.95
-    
+
+    pdfmetrics.registerFont(TTFont('HelveticaNeue', 'HelveticaNeue-01.ttf'))
+    pdfmetrics.registerFont(TTFont('HelveticaNeue-CondensedBold', 'HelveticaNeue-CondensedBold-05.ttf'))
+
     imgs = extractImg(wbk)
     #print(imgs)
     #for total rows: if modulo 6=0 new page
@@ -71,10 +76,10 @@ def createPrintPDF(wbk):
                     
                 imgx = 1
                 imgy = 24.95
-                titx = 4.8 #against image L
-                tity = 24.95+1.3
-                subx = 4.8
-                suby = 24.95
+                titx = 1.83 #against image L?
+                tity = 24.95+1.3-1.74
+                subx = 1.83
+                suby = 24.95+1.3-1.74
                 qrcx = 16.2
                 qrcy = 24.95
                 if (crow >= countRow(wbk)+1):
@@ -84,7 +89,7 @@ def createPrintPDF(wbk):
         #fImg = Frame(imgx*cm,imgy*cm,3.8*cm,3.8*cm,showBoundary=1)
         try:
             #print(scaleImage(imgs[crow-2]))
-            c.drawImage(utils.ImageReader(imgs[crow-2]),x=imgx*cm, y=imgy*cm,width=3.8*cm,height=3.8*cm)
+            #c.drawImage(utils.ImageReader(imgs[crow-2]),x=imgx*cm, y=imgy*cm,width=3.8*cm,height=3.8*cm)
             pass
         except:
             pass
@@ -93,28 +98,33 @@ def createPrintPDF(wbk):
         imgy-=4.8
         
         #title
-        fTit = Frame(titx*cm, tity*cm,11.4*cm, 2.5*cm, showBoundary=0)
-        titStyle = ParagraphStyle('title', fontName='Helvetica', fontSize=70, alignment=1, wordWrap=None, leading=75)
+        fTit = Frame(titx*cm, tity*cm, 11.4*cm, 2.5*cm, showBoundary=1)
+        titStyle = ParagraphStyle('title', fontName='HelveticaNeue-CondensedBold', fontSize=24, alignment=0, wordWrap=None, leading=75)
         if wbk.cell(row=crow,column=2).value == None:
             dtittemp = ''
         else:
-            dtittemp = [Paragraph(str(wbk.cell(row=crow,column=2).value),titStyle)]
-        dtit = KeepInFrame(11.4*cm, 2*cm, dtittemp, mode='shrink', vAlign='MIDDLE', hAlign='CENTER', fakeWidth=False)
+            dtittemp = [Paragraph(str(wbk.cell(row=crow,column=2).value).upper(),titStyle)]
+        dtit = KeepInFrame(11.4*cm, 2*cm, dtittemp, mode='overflow', vAlign='TOP', hAlign='LEFT', fakeWidth=False)
         fTit.addFromList([dtit], c)
         #fTit.drawBoundary(c)
         tity-=4.8
         
         
         #subtitle
-        fSub = Frame(subx*cm,suby*cm,11.4*cm,1.3*cm,showBoundary=0)
-        subStyle = ParagraphStyle('subtitle', fontName='Helvetica', fontSize=36, alignment=1, wordWrap=None, leading=40)
-        if wbk.cell(row=crow,column=3).value == None:
-            dsubtemp = ''
-        else:
-            dsubtemp = [Paragraph(str(wbk.cell(row=crow,column=3).value),subStyle)]
-        dsub = KeepInFrame(11.4*cm, 1.3*cm, dsubtemp, mode='shrink', vAlign='MIDDLE', hAlign='CENTER', fakeWidth=False)
-        fSub.addFromList([dsub], c)
+        #fSub = Frame(subx*cm,suby*cm, 11.4*cm,1.3*cm,showBoundary=1)
+        #subStyle = ParagraphStyle('subtitle', fontName='HelveticaNeue', fontSize=14, alignment=0, wordWrap=None, leading=75)
+        #if wbk.cell(row=crow,column=3).value == None:
+        #    dsubtemp = ''
+        #else:
+        #    dsubtemp = [Paragraph(str(wbk.cell(row=crow,column=3).value).upper(),subStyle)]
+        #dsub = KeepInFrame(11.4*cm, 1.3*cm, dsubtemp, mode='truncate', vAlign='TOP', hAlign='LEFT', fakeWidth=False)
+        #fSub.addFromList([dsub], c)
         #fSub.drawBoundary(c)
+
+        subStyle = ParagraphStyle('subtitle', fontName='HelveticaNeue', fontSize=14, alignment=0, wordWrap=None, leading=75)
+        p = Paragraph("TEST", style=subStyle)
+        p.wrapOn(c, c.width, c.height)
+        p.drawOn(c, subx*cm, suby*cm)
         suby-=4.8
         
         #qrcode
@@ -151,6 +161,7 @@ def loadGUI():
                 #for c1,c2,c3,c4 in mS:
                 #    print("{0} {1} {2} {3}".format(c1.value, c2.value, c3.value, c4.value))
             except Exception as error:
+                print(error)
                 el["text"]= error,str(traceback.extract_stack()[-1][1])
     
     ft = tk.Label(text="xlsx File:")
